@@ -1,0 +1,6 @@
+incident_id,timestamp,person_name,email_address,phone_number,source_ip,destination_ip,event_type,severity_level,alert_status
+INC-2024001,2024-01-15 10:32:00,Ali Khan,ali.khan@gmail.com,+92-311-1234567,45.12.33.9,192.168.1.5,login_attempt,High,Detected
+INC-2024002,2024-02-20 14:55:00,Sara Ahmed,sara.ahmed@yahoo.com,+92-321-7654321,88.77.66.55,192.168.1.8,port_scan,Medium,Blocked
+INC-2024003,2024-03-10 09:10:00,Omar Shah,omar.shah@outlook.com,+92-333-9876543,201.45.67.89,192.168.2.1,brute_force,Critical,Investigating
+INC-2024004,2024-04-05 17:22:00,Fatima Malik,fatima.malik@hotmail.com,+92-300-1112233,99.88.77.66,192.168.1.12,malware_detected,High,Escalated
+INC-2024005,2024-05-18 11:40:00,Hassan Butt,hassan.butt@gmail.com,+92-345-4445556,150.20.30.40,192.168.3.2,phishing_attempt,Low,Resolved
