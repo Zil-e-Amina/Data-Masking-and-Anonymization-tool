@@ -1,0 +1,88 @@
+Run started:2026-05-03 13:14:02.358784+00:00
+
+Test results:
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: .\src\anonymizer.py:16:4
+15	    try:    df[col] = pd.cut(df[col], bins=bins).astype(str)
+16	    except: pass
+17	    return df
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: .\src\detector.py:105:4
+104	            if val: return val.strip()
+105	    except: pass
+106	    # Fall back to splitting on : or =
+
+--------------------------------------------------
+>> Issue: [B311:blacklist] Standard pseudo-random generators are not suitable for security/cryptographic purposes.
+   Severity: Low   Confidence: High
+   CWE: CWE-330 (https://cwe.mitre.org/data/definitions/330.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random
+   Location: .\src\masker.py:42:22
+41	        num   = float(re.sub(r"[^\d.]", "", val))
+42	        noise = num * random.uniform(0.05, 0.15)
+43	        return str(round(num + noise, 2))
+
+--------------------------------------------------
+>> Issue: [B105:hardcoded_password_string] Possible hardcoded password: 'Suppression'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b105_hardcoded_password_string.html
+   Location: .\src\pipeline.py:16:4
+15	    "Session Token":"Salted SHA-256",
+16	    "Password":     "Suppression",
+17	    "Username":     "Suppression",
+18	    "Secret Key":   "Salted SHA-256",
+19	    "URL":          "Encryption",
+20	    "Date of Birth":"Suppression",
+21	    "SHA256 Hash":  "Salted SHA-512",
+22	}
+23	
+24	RISK_SCORES = {
+25	    "CRITICAL": 30,
+26	    "HIGH":     20,
+27	    "MEDIUM":   10,
+28	    "LOW":       5,
+29	}
+30	
+31	# Columns that are always sensitive regardless of their values
+32	FORCE_MASK = {
+33	    "person_name":      "Person Name",
+34	    "analyst_assigned": "Person Name",
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b110_try_except_pass.html
+   Location: .\src\security.py:137:4
+136	            f.write(log_entry)
+137	    except:
+138	        pass  # Never crash because of logging
+
+--------------------------------------------------
+
+Code scanned:
+	Total lines of code: 1017
+	Total lines skipped (#nosec): 0
+	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 0
+
+Run metrics:
+	Total issues (by severity):
+		Undefined: 0
+		Low: 5
+		Medium: 0
+		High: 0
+	Total issues (by confidence):
+		Undefined: 0
+		Low: 0
+		Medium: 1
+		High: 4
+Files skipped (0):
