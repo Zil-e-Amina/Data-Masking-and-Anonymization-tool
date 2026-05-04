@@ -1,0 +1,7 @@
+streamlit
+pandas
+matplotlib
+PyMuPDF
+python-docx
+bandit
+requests
