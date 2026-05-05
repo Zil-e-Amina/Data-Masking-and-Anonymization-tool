@@ -9,6 +9,7 @@ masking and anonymizing personal information.
 - `source/` - Core modules and logic
 - `data/` - Input datasets
 - `output/` - Processed/masked results
+-  Requirements.txt
 
 ✨ Features
 - Masks personal data (emails, phone numbers, names)
