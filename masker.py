@@ -7,75 +7,52 @@ import secrets
 TOKEN_MAP     = {}
 TOKEN_COUNTER = [1]
 
-
-# ── Hashing ───────────────────────────────────────────────────────────────────
 def hash_sha256(val):
     salt   = secrets.token_hex(8)
-    hashed = hashlib.sha256(
-        f"{salt}{val}".encode()
-    ).hexdigest()[:16]
+    hashed = hashlib.sha256(f"{salt}{val}".encode()).hexdigest()[:16]
     return f"SHA256[{hashed}...]"
-
 
 def hash_md5(val):
     salt   = secrets.token_hex(4)
-    hashed = hashlib.md5(
-        f"{salt}{val}".encode(),
-        usedforsecurity=False
-    ).hexdigest()[:12]
+    hashed = hashlib.md5(f"{salt}{val}".encode(), usedforsecurity=False).hexdigest()[:12]
     return f"MD5[{hashed}...]"
-
 
 def hash_sha512(val):
     salt   = secrets.token_hex(8)
-    hashed = hashlib.sha512(
-        f"{salt}{val}".encode()
-    ).hexdigest()[:20]
+    hashed = hashlib.sha512(f"{salt}{val}".encode()).hexdigest()[:20]
     return f"SHA512[{hashed}...]"
 
-
-# ── Encryption ────────────────────────────────────────────────────────────────
 def encrypt_value(val):
     encoded = base64.b64encode(val.encode()).decode()
     return f"ENC[{encoded[:16]}...]"
 
-
-# ── Tokenization ──────────────────────────────────────────────────────────────
 def tokenize(val):
     if val not in TOKEN_MAP:
         TOKEN_MAP[val] = f"TOKEN_{TOKEN_COUNTER[0]:03d}"
         TOKEN_COUNTER[0] += 1
     return TOKEN_MAP[val]
 
-
 def reset_tokens():
     TOKEN_MAP.clear()
     TOKEN_COUNTER[0] = 1
 
-
-# ── Noise ─────────────────────────────────────────────────────────────────────
 def add_noise(val):
     try:
         num   = float(re.sub(r"[^\d.]", "", str(val)))
         noise = num * random.uniform(0.05, 0.15)
         return str(round(num + noise, 2))
     except Exception:
-        return hash_sha256(val)
+        return val
 
-
-# ── Email ─────────────────────────────────────────────────────────────────────
 def mask_email(v):
     try:
         parts  = v.split("@")
         name   = parts[0]
         domain = parts[1] if len(parts) > 1 else "unknown"
-        masked = name[0] + "*" * (len(name) - 1)
-        return f"{masked}@{domain}"
+        return name[0] + "*" * (len(name) - 1) + "@" + domain
     except Exception:
-        return hash_sha256(v)
+        return "[EMAIL HIDDEN]"
 
-
-# ── IP Address ────────────────────────────────────────────────────────────────
 def mask_ip(v):
     try:
         p = v.split(".")
@@ -83,8 +60,6 @@ def mask_ip(v):
     except Exception:
         return "[IP HIDDEN]"
 
-
-# ── Phone ─────────────────────────────────────────────────────────────────────
 def mask_phone(v):
     try:
         v      = v.strip()
@@ -92,24 +67,19 @@ def mask_phone(v):
         if len(digits) < 6:
             return "[PHONE HIDDEN]"
         if v.startswith("+"):
-            cc = digits[:2]
-            return f"+{cc}-3**-****{digits[-2:]}"
+            return f"+{digits[:2]}-3**-****{digits[-2:]}"
         elif v.startswith("0"):
             return "0" + digits[1:4] + "*****" + digits[-2:]
         return digits[:3] + "*****" + digits[-2:]
     except Exception:
         return "[PHONE HIDDEN]"
 
-
-# ── CNIC ──────────────────────────────────────────────────────────────────────
 def mask_cnic(v):
     try:
         return v[:5] + "-*******-" + v[-1]
     except Exception:
         return "[CNIC HIDDEN]"
 
-
-# ── Credit Card ───────────────────────────────────────────────────────────────
 def mask_card(v):
     try:
         clean = re.sub(r"[-\s]", "", v)
@@ -117,23 +87,15 @@ def mask_card(v):
     except Exception:
         return "[CARD HIDDEN]"
 
-
-# ── Person Name ───────────────────────────────────────────────────────────────
 def mask_name(v):
     try:
         parts = v.strip().split()
         if len(parts) >= 2:
-            return (
-                parts[0][0] + "." + "*" * len(parts[0][1:])
-                + " "
-                + parts[-1][0] + "." + "*" * len(parts[-1][1:])
-            )
+            return parts[0][0] + "." + "*"*len(parts[0][1:]) + " " + parts[-1][0] + "." + "*"*len(parts[-1][1:])
         return parts[0][0] + "." + "*" * len(parts[0][1:])
     except Exception:
         return "[NAME HIDDEN]"
 
-
-# ── Home Address ──────────────────────────────────────────────────────────────
 def mask_address(v):
     try:
         parts    = v.split(",")
@@ -142,8 +104,6 @@ def mask_address(v):
     except Exception:
         return "[ADDRESS HIDDEN]"
 
-
-# ── Password ──────────────────────────────────────────────────────────────────
 def mask_password(v):
     try:
         if ":" in v:
@@ -154,73 +114,35 @@ def mask_password(v):
     except Exception:
         return "[HIDDEN]"
 
-
-# ── MAC Address ───────────────────────────────────────────────────────────────
 def mask_mac(v):
-    """
-    Hash any MAC format:
-    00:1A:2B:3C:4D:5E  full colon
-    00:1A:2B:3C:4D     partial colon
-    00-1A-2B-3C-4D-5E  dash
-    001A.2B3C.4D5E     Cisco dot
-    001A2B3C4D5E       no separator
-    """
     return hash_md5(v)
 
-
-# ── Port Number ───────────────────────────────────────────────────────────────
 def mask_port(v):
-    """
-    Mask port numbers:
-    Known sensitive ports show service name
-    Ephemeral ports above 1024 show range
-    """
     try:
         port = int(re.sub(r"[^\d]", "", str(v)))
-        sensitive = {
-            20:    "FTP-Data",
-            21:    "FTP",
-            22:    "SSH",
-            23:    "Telnet",
-            25:    "SMTP",
-            53:    "DNS",
-            80:    "HTTP",
-            110:   "POP3",
-            143:   "IMAP",
-            443:   "HTTPS",
-            445:   "SMB",
-            1433:  "MSSQL",
-            1521:  "Oracle",
-            3306:  "MySQL",
-            3389:  "RDP",
-            5432:  "PostgreSQL",
-            5900:  "VNC",
-            6379:  "Redis",
-            8080:  "HTTP-Alt",
-            8443:  "HTTPS-Alt",
-            27017: "MongoDB",
+        known = {
+            20:"FTP-Data",21:"FTP",22:"SSH",23:"Telnet",
+            25:"SMTP",53:"DNS",80:"HTTP",110:"POP3",
+            143:"IMAP",443:"HTTPS",445:"SMB",1433:"MSSQL",
+            1521:"Oracle",3306:"MySQL",3389:"RDP",
+            5432:"PostgreSQL",5900:"VNC",6379:"Redis",
+            8080:"HTTP-Alt",8443:"HTTPS-Alt",27017:"MongoDB",
         }
-        if port in sensitive:
-            return f"[PORT/{sensitive[port]}/MASKED]"
+        if port in known:
+            return f"[PORT/{known[port]}/MASKED]"
         if port > 1024:
             return "[EPHEMERAL/MASKED]"
         return f"[PORT/{port}/MASKED]"
     except Exception:
         return "[PORT/MASKED]"
 
-
-# ── Hostname ──────────────────────────────────────────────────────────────────
 def mask_hostname(v):
     try:
         parts = v.split(".")
-        if len(parts) >= 2:
-            return "***." + parts[-1]
-        return hash_sha256(v)
+        return "***." + parts[-1] if len(parts) >= 2 else hash_sha256(v)
     except Exception:
         return "[HOST HIDDEN]"
 
-
-# ── CVE ID ────────────────────────────────────────────────────────────────────
 def mask_cve(v):
     try:
         parts = v.split("-")
@@ -228,37 +150,18 @@ def mask_cve(v):
     except Exception:
         return "[CVE HIDDEN]"
 
-
-# ── JWT Token ─────────────────────────────────────────────────────────────────
 def mask_jwt(v):
     return hash_sha256(v)
 
-
-# ── User Agent ────────────────────────────────────────────────────────────────
 def mask_user_agent(v):
-    browsers = [
-        "Chrome", "Firefox", "Safari", "Edge",
-        "Opera", "curl", "wget", "python", "Go-http"
-    ]
-    try:
-        for b in browsers:
-            if b.lower() in v.lower():
-                return f"[{b}/HIDDEN]"
-        return "[AGENT HIDDEN]"
-    except Exception:
-        return "[AGENT HIDDEN]"
+    for b in ["Chrome","Firefox","Safari","Edge","Opera","curl","wget","python","Go-http"]:
+        if b.lower() in v.lower():
+            return f"[{b}/HIDDEN]"
+    return "[AGENT HIDDEN]"
 
 
-# ── Main router ────────────────────────────────────────────────────────────────
-def mask_value(label, value, technique="auto"):
-    # User selected technique
-    if technique == "hash":     return hash_sha256(value)
-    if technique == "encrypt":  return encrypt_value(value)
-    if technique == "tokenize": return tokenize(value)
-    if technique == "suppress": return "[SUPPRESSED]"
-    if technique == "noise":    return add_noise(value)
-
-    # Auto mode — best per type
+# ── auto mode — used only when technique="auto" ───────────────────────────────
+def _auto_mask(label, value):
     dispatch = {
         "Email":         mask_email,
         "IP Address":    mask_ip,
@@ -288,5 +191,56 @@ def mask_value(label, value, technique="auto"):
         "Passport":      lambda v: "[PASSPORT HIDDEN]",
         "IMEI":          hash_sha256,
     }
-    fn = dispatch.get(label, hash_sha256)
-    return fn(value)
+    return dispatch.get(label, hash_sha256)(value)
+
+
+# ── MAIN FUNCTION ─────────────────────────────────────────────────────────────
+# auto   → each field gets its best technique
+# others → technique applies ONLY to suitable fields
+#           ALL other fields returned AS ORIGINAL VALUE (unchanged)
+# ─────────────────────────────────────────────────────────────────────────────
+def mask_value(label, value, technique="auto"):
+
+    # AUTO — best technique per field
+    if technique == "auto":
+        return _auto_mask(label, value)
+
+    # HASH — only these fields, everything else UNCHANGED
+    if technique == "hash":
+        if label in {"Password", "IBAN", "Session Token", "JWT Token",
+                     "Secret Key", "Private Key", "Device ID", "IMEI",
+                     "SHA256 Hash", "MD5 Hash"}:
+            return hash_sha256(value)
+        return value  # ALL OTHERS — original unchanged
+
+    # ENCRYPT — only these fields, everything else UNCHANGED
+    if technique == "encrypt":
+        if label in {"URL", "Secret Key", "JWT Token", "Session Token",
+                     "IBAN", "Private Key"}:
+            return encrypt_value(value)
+        return value  # ALL OTHERS — original unchanged
+
+    # TOKENIZE — only these fields, everything else UNCHANGED
+    if technique == "tokenize":
+        if label in {"Credit Card", "Email", "Person Name", "IP Address",
+                     "Phone Number", "CNIC", "IBAN", "MAC Address",
+                     "Username", "Session Token"}:
+            return tokenize(value)
+        return value  # ALL OTHERS — original unchanged
+
+    # SUPPRESS — only these fields, everything else UNCHANGED
+    if technique == "suppress":
+        if label in {"Password", "Date of Birth", "Private Key",
+                     "Passport", "Process ID", "Username",
+                     "Secret Key", "JWT Token"}:
+            return "[SUPPRESSED]"
+        return value  # ALL OTHERS — original unchanged
+
+    # NOISE — only purely numeric values, everything else UNCHANGED
+    if technique == "noise":
+        clean = re.sub(r"[^\d.]", "", str(value))
+        if len(clean) > 0 and len(clean) >= len(str(value)) * 0.8:
+            return add_noise(value)
+        return value  # ALL OTHERS — original unchanged
+
+    return value
